@@ -10,9 +10,18 @@ class UserAttemptDTO extends BaseDTO
 
         public readonly ?string $email,
 
-        public readonly ?string $password,
+        public readonly string $password,
 
     ) { }
+
+    public static function make(string $password, ?string $phone = null, ?string $email = null) : self
+    {
+        return new self(
+            phone : $phone,
+            email : $email,
+            password : $password,
+        );
+    }
 
     public function toArray(): array {
 

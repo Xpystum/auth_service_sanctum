@@ -13,4 +13,12 @@ class AuthConfig
 
     ) { }
 
+    public static function make(string $guard = 'sanctum', $UrlExpiresConfig = '360') : self
+    {
+        return new self(
+            guard: $guard,
+            UrlExpiresConfig: $UrlExpiresConfig,
+        );
+    }
+
 }

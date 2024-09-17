@@ -9,10 +9,8 @@ interface AuthInterface
 {
     public function attemptUser(BaseDTO $data);
     public function loginUser(Model $model);
-    public function isLogin(BaseDTO $data);
     public function user();
     public function logout();
     public function refresh();
     public function respondWithToken(string $token);
-    public function userIsRegister();
 }

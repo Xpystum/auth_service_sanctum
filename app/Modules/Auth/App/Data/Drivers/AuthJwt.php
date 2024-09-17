@@ -42,7 +42,7 @@ class AuthJwt implements AuthInterface
     /**
      * @param Authenticatable $model
      *
-     * @return null
+     * @return ?array
      */
     public function loginUser(Model $model) : ?array
     {
@@ -59,7 +59,7 @@ class AuthJwt implements AuthInterface
 
 
     //возвращает user по jwt token в header
-    public function user() : null|Model
+    public function user() : ?Model
     {
         return auth($this->config->guard)->user();
     }
