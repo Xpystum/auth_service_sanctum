@@ -3,11 +3,11 @@ namespace App\Modules\Auth\Domain\Services;
 
 use App\Modules\Auth\App\Action\AttemptUserAuthAction;
 use App\Modules\Auth\App\Action\GetUserAuthAction;
-use App\Modules\Auth\App\Action\GetUserAuthRegisterAction;
 use App\Modules\Auth\App\Action\loginUserAuthAction;
 use App\Modules\Auth\App\Action\LogoutUserAuthAction;
 use App\Modules\Auth\App\Action\RefreshUserAuthAction;
 use App\Modules\Auth\App\Data\DTO\BaseDTO;
+use App\Modules\Auth\App\Data\DTO\UserAttemptDTO;
 use App\Modules\Auth\Domain\Interface\AuthInterface;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,20 +23,10 @@ class AuthService
     }
 
     /**
-     * Вернуть юзера по Bearer токену и зарегистрированного (auth:true в БД)
-     *
-     * @return null|Model
-     */
-    public function getUserAuthRegister() : ?Model
-    {
-        return GetUserAuthRegisterAction::make($this->serviceAuth)->run();
-    }
-
-    /**
      * Вернуть юзера по Bearer токену
      *
      * @return null|Model
-     */
+    */
     public function getUserAuth() : ?Model
     {
         return GetUserAuthAction::make($this->serviceAuth)->run();
@@ -46,7 +36,7 @@ class AuthService
     /**
      * Найти user по данным email/phone/password
      *
-     * @param BaseDTO $data
+     * @param UserAttemptDTO $data
      *
      * @return bool|array
      */
@@ -56,7 +46,7 @@ class AuthService
     }
 
     /**
-     * //Удалить Bearer для user (выйти) *which will invalidate the current token and unset the authenticated user.
+     * Удалить токен
      * @return bool
      */
     public function logout() : bool
@@ -65,10 +55,10 @@ class AuthService
     }
 
     /**
-     * Удаляет старый Bearer (заносит в черный список) и присылает новый
+     * Удаляет актуальный Bearer, присылаем новый.
      * @return null|array
      */
-    public function refresh() : ?array
+    public function refresh() : bool|array
     {
         return RefreshUserAuthAction::make($this->serviceAuth)->run();
     }

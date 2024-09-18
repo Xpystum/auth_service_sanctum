@@ -1,18 +1,18 @@
 <?php
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\TestController;
-use App\Modules\Auth\App\Data\Drivers\AuthSanctum;
-use Illuminate\Http\Request;
+use App\Modules\Auth\Presentation\HTTP\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Auth\RequestGuard;
 
-// Route::get('/user', function (Request $request) {
-//     $email = 'test@example.com';
-//     $password = '123456';
-//     dd(auth());
 
-//     return $request->user();
-// })->middleware('auth:sanctum');
+Route::prefix('auth')->middleware('auth:sanctum')->group(function () {
 
-Route::middleware('auth:sanctum')->get('/user2', TestController::class);
+    Route::post('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+
+});
+
+
+Route::post('auth/login', [AuthController::class, 'login']);
+

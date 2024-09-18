@@ -8,21 +8,29 @@ use App\Modules\Auth\Common\Config\AuthConfig;
 use App\Modules\Auth\Domain\Interface\AuthInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Request;
 use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\TransientToken;
 
 #TODO ->addMinutes(360) - добавить время истечения
 class AuthSanctum implements AuthInterface
 {
     private ?AuthConfig $config = null;
 
-    public function __construct() {
-        $this->config = AuthConfig::make();
+    public function __construct(AuthConfig $config) {
+        $this->config = $config;
     }
 
+    /**
+     * Нахождение пользователя по password/email/phone и получение токена
+     * @param BaseDTO $data
+     *
+     * @return [type]
+     */
     public function attemptUser(BaseDTO $data)
     {
-        return is_null($data) ? false : $this->checkUserAuth($data->toArray());
+        return is_null($data) ? false : $this->checkUserAuth($data);
     }
 
     /**
@@ -38,7 +46,7 @@ class AuthSanctum implements AuthInterface
         /**
         *@var string $token
         */
-        $token = $model->createToken($this->getNameTimeToken())->plainTextToken;
+        $token = $model->createToken($this->getNameTimeToken(), ['*'], now()->addMinutes($this->config->UrlExpiresConfig))->plainTextToken;
 
         return $this->respondWithToken($token);
     }
@@ -50,7 +58,7 @@ class AuthSanctum implements AuthInterface
     public function user()
     {
 
-        $user = Request::user();
+        $user = auth('sanctum')->user();
 
         return $user ? $user : false;
     }
@@ -61,10 +69,19 @@ class AuthSanctum implements AuthInterface
     */
     public function logout()
     {
+        /**
+        * @var User
+        */
+        $user = auth('sanctum')->user();
 
-       $status = Request::user()->currentAccessToken()->delete();
+        /**
+         * @var PersonalAccessToken
+        */
+        $token = $user->currentAccessToken();
 
-       return $status ? true : false;
+        $status = $token->delete();
+
+        return $status ? true : false;
 
     }
 
@@ -73,13 +90,20 @@ class AuthSanctum implements AuthInterface
         /**
         * @var User
         */
-        $user = Request::user();
+        $user = auth('sanctum')->user();
 
-        // Удаляем старый токен, если он существует
-        if ($user->currentAccessToken()) { $user->currentAccessToken()->delete(); }
+        #TODO Здесь может быть ошибка с актуальными токена т.е нужно получать из beare получать его из user и уже его удалять.
+        /**
+        * @var PersonalAccessToken
+        */
+        $token = $user->currentAccessToken();
+
+        // Удаляем старый токен, если он существует (есть проблема он получит все токены..)
+        if ($token) { $token->delete(); }
+
 
         // Создаем новый токен
-        $newToken = $user->createToken($this->getNameTimeToken())->plainTextToken;
+        $newToken = $user->createToken($this->getNameTimeToken(), ['*'], now()->addMinutes($this->config->UrlExpiresConfig))->plainTextToken;
 
         return $newToken ? $this->respondWithToken($newToken) : false;
     }
@@ -89,33 +113,34 @@ class AuthSanctum implements AuthInterface
 
         $data = [
             'access_token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => '666666',
-            // 'expires_in' => config($this->config->UrlExpiresConfig) * 60,
+            'token_type' => 'Bearer ',
+            'expires_in' => $this->config->UrlExpiresConfig,
         ];
 
         return $data;
 
     }
 
-    private function checkUserAuth(array $credentials) : bool|array
+    /**
+     * @param UserAttemptDTO $credentials
+     *
+     * @return bool
+     */
+    private function checkUserAuth(BaseDTO $credentials) : bool|array
     {
-        if (Auth::attempt($credentials)) {
 
-            /**
-            * @var User
-            */
-            $user = Auth::user();
+        $user = User::where('email', $credentials->email)
+                ->orWhere('phone', $credentials->phone)
+                ->first();
 
-            // Создание токена
-            $token = $user->createToken($this->getNameTimeToken())->plainTextToken;
 
-            // Возврат ответа с токеном и данными пользователя
-            return $this->respondWithToken($token);
+        if (! $user || ! Hash::check($credentials->password, $user->password)) {
+            return false;
         }
 
-        return false;
+        $token = $user->createToken($this->getNameTimeToken(), ['*'], now()->addMinutes($this->config->UrlExpiresConfig))->plainTextToken;
 
+        return $this->respondWithToken($token);
     }
 
     private function getNameTimeToken() : string

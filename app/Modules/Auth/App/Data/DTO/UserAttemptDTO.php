@@ -31,6 +31,7 @@ class UserAttemptDTO extends BaseDTO
             'password' => $this->password,
         ];
 
+        //фильтр для удаление значений с null
         $data = collect($data)->filter(function($value){
             return $value !== null;
         })->toArray();

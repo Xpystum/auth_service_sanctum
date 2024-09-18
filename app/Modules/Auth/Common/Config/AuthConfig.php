@@ -9,11 +9,11 @@ class AuthConfig
 
         public string $guard,
 
-        public string $UrlExpiresConfig,
+        public int $UrlExpiresConfig,
 
     ) { }
 
-    public static function make(string $guard = 'sanctum', $UrlExpiresConfig = '360') : self
+    public static function make(string $guard = 'sanctum', $UrlExpiresConfig = 360) : self
     {
         return new self(
             guard: $guard,

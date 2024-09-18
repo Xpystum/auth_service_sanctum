@@ -1,12 +1,14 @@
 <?php
 namespace App\Modules\Auth\Presentation\HTTP\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Modules\Auth\App\Data\DTO\UserAttemptDTO;
 use App\Modules\Auth\Domain\Traits\TraitController;
 use Illuminate\Http\Request;
 
+use function App\Modules\Auth\Common\Helpers\array_success;
+
 //для преобразование массива с сообщением
-use function App\Helpers\array_success;
 
 
 
@@ -22,10 +24,10 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $json_token = $this->authService->attemptUserAuth(
-            new UserAttemptDTO(
+            UserAttemptDTO::make(
+                password: $request->password,
                 email: $request->email,
                 phone: $request->phone,
-                password: $request->password,
             )
         );
 
@@ -44,8 +46,9 @@ class AuthController extends Controller
     public function user()
     {
         $user = $this->authService->getUserAuth();
+
         $this->abort_unless($user, 401);
-        // abort_unless($user, 401, "Unauthorized" );
+
         $userResource = new UserResource($user);
 
         #TODO Добавить ресурс возврата user (не полностью)
@@ -59,11 +62,9 @@ class AuthController extends Controller
      */
     public function logout()
     {
-
         $status = $this->authService->logout();
 
         $this->abort_unless($status, 401);
-        // abort_unless($status, 401, "Unauthorized" );
 
         return response()->json(array_success(message: 'Successfully logged out'), 200);
     }
@@ -73,30 +74,12 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refresh()
+    public function refresh(Request $request)
     {
-
         $token = $this->authService->refresh();
 
         $this->abort_unless($token, 401);
-        // abort_unless($token, 401, "Unauthorized");
 
         return response()->json(array_success($token , 'Successfully refresh new token'), 200);
-    }
-
-    /**
-     * Сигнатура токена.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => config('jwt.ttl') * 60
-        ]);
     }
 }
