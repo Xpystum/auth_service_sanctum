@@ -146,6 +146,17 @@ class ExampleTest extends TestCase
         }
     }
 
+    /**
+     * Тест сервеса и метода loginUser - где мы возвращаем токен по модели
+     * @return [type]
+     */
+    public function test_loginUser()
+    {
+        $user = $this->createUser();
+        $array = $this->serv->loginUser($user);
+        $this->assertIsArray($array);
+    }
+
 
 
 //Private
